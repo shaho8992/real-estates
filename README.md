@@ -1,138 +1,223 @@
-import cv2
-import numpy as np
-import matplotlib.pyplot as plt
+Q1: Button-Controlled LED Toggle
 
-# Load the image
-img = cv2.imread("kurd.jpg")  # Replace with the correct image file path
-if img is None:
-    print("Error: Image not found! Please check the file path.")
-    exit()
+start:
+    cbi ddrb, 1        ; Set PINB.1 as input
+    sbi ddrb, 7        ; Set PINB.7 as output
+    sbi ddrc, 7        ; Set PINC.7 as output
 
-# Convert the image to RGB and grayscale
-imagergb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+loop:
+    in r16, pinb       ; Read PINB
+    sbrs r16, 1        ; Skip if PINB.1 is set
+    rjmp led_on        ; Jump to led_on if not set
 
-# Apply Gaussian blur
-img_blur = cv2.GaussianBlur(img_gray, (5, 5), 0)
+    sbi portc, 7       ; Turn off LED
+    rjmp loop          ; Loop back
 
-# Perform edge detection using the Canny method
-edges = cv2.Canny(img_blur, 100, 200)
+led_on:
+    cbi portc, 7       ; Turn on LED
+    rjmp loop          ; Loop back
+;-----------------------------------------------------------------
+Q2: Binary Addition Display
 
-# Resize the edge-detected image
-resized = cv2.resize(edges, (300, 300))
+.include "m32def.inc"
 
-# Apply rotation
-height, width = resized.shape[:2]
-center = (width // 2, height // 2)
-rotation_matrix = cv2.getRotationMatrix2D(center, 45, 1)
-rotated = cv2.warpAffine(resized, rotation_matrix, (width, height))
+start:
+    ldi r16, 0x00      ; Set PORTA and PORTB as input
+    out ddra, r16
+    out ddrb, r16
+    ldi r16, 0xFF      ; Set PORTC as output
+    out ddrc, r16
 
-# Apply contrast stretching
-def contrast_stretching(image, in_range=(50, 200), out_range=(0, 255)):
-    in_min, in_max = in_range
-    out_min, out_max = out_range
-    stretched = ((image - in_min) * ((out_max - out_min) / (in_max - in_min)) + out_min)
-    return np.clip(stretched, out_min, out_max).astype(np.uint8)
+loop:
+    in r17, pina       ; Read PINA
+    in r18, pinb       ; Read PINB
+    add r17, r18       ; Add values
+    out portc, r17     ; Output result to PORTC
+    rjmp loop          ; Repeat loop
+;---------------------------------------------------------------
+Q3: Multi-Level Nested Loops with Counter
 
-contrast_image = contrast_stretching(img_gray)
+.include "m32def.inc"
 
-# Apply histogram equalization
-hist_eq_image = cv2.equalizeHist(img_gray)
+ldi r17, 0xFF         ; Set PORTC as output
+out ddrc, r17
+ldi r16, 0x55         ; Initial value for PORTC
+out portc, r16
 
-# Apply logarithmic transformation
-def logarithmic_transformation(image):
-    c = 255 / (np.log(1 + np.max(image)))  # Scale factor
-    log_image = c * np.log(1 + image.astype(np.float32))
-    return np.clip(log_image, 0, 255).astype(np.uint8)
+math:
+    ldi r20, 5        ; Outer loop counter
 
-log_image = logarithmic_transformation(img_gray)
+math1:
+    ldi r21, 200      ; Middle loop counter
 
-# Apply gamma correction
-def gamma_correction(image, gamma):
-    normalized_image = image / 255.0
-    gamma_corrected = (255 * (normalized_image ** gamma)).astype(np.uint8)
-    return gamma_corrected
+math2:
+    ldi r22, 250      ; Inner loop counter
 
-gamma_corrected = gamma_correction(img_gray, gamma=0.5)
+delay:
+    out portc, r16    ; Output to PORTC
+    com r16           ; Complement value in r16
+    dec r22           ; Decrement inner counter
+    brne math2        ; Repeat inner loop if not zero
+    dec r21           ; Decrement middle counter
+    brne math1        ; Repeat middle loop if not zero
+    dec r20           ; Decrement outer counter
+    brne math         ; Repeat outer loop if not zero
+ret
+;---------------------------------------------------------------
+Q4: XOR Logic Check and Output
 
-# Display results
-plt.figure(figsize=(15, 12))
+.include "m32def.inc"
 
-plt.subplot(3, 3, 1)
-plt.imshow(imagergb)
-plt.title("Original Image (RGB)")
-plt.axis('off')
+LDI R20, 0xFF         ; Set PORTC as output
+OUT DDRC, R20 
+LDI R20, 0x00         ; Set PORTB as input
+OUT DDRB, R20
+OUT PORTC, R20        ; Clear PORTC
+LDI R21, 5            ; Reference value
 
-plt.subplot(3, 3, 2)
-plt.imshow(img_gray, cmap='gray')
-plt.title("Grayscale Image")
-plt.axis('off')
+HERE: 
+    IN R20, PINB      ; Read PINB
+    EOR R20, R21      ; Compare with reference using XOR
+    BRNE HERE         ; Stay in loop if not equal
 
-plt.subplot(3, 3, 3)
-plt.imshow(edges, cmap='gray')
-plt.title("Edge Detection (Canny)")
-plt.axis('off')
+    LDI R20, 4        ; Set PORTC to 4
+    OUT PORTC, R20
 
-plt.subplot(3, 3, 4)
-plt.imshow(resized, cmap='gray')
-plt.title("Resized Edge Image")
-plt.axis('off')
+EXIT:
+    JMP EXIT          ; Infinite loop
+;-----------------------------------------------------------
+Q5: 7-Segment Display Counter
 
-plt.subplot(3, 3, 5)
-plt.imshow(rotated, cmap='gray')
-plt.title("Rotated Edge Image")
-plt.axis('off')
+.include "m32def.inc"
 
-plt.subplot(3, 3, 6)
-plt.imshow(contrast_image, cmap='gray')
-plt.title("Contrast Stretching")
-plt.axis('off')
+ldi r16, 0xFF         ; Set PORTC as output
+out DDRC, r16
+ldi r16, 0x00         ; Clear PORTC
+out PORTC, r16
 
-plt.subplot(3, 3, 7)
-plt.imshow(log_image, cmap='gray')
-plt.title("Logarithmic Transformation")
-plt.axis('off')
+main:
+    ldi r17, 0        ; Initialize counter
 
-plt.subplot(3, 3, 8)
-plt.imshow(hist_eq_image, cmap='gray')
-plt.title("Histogram Equalization")
-plt.axis('off')
+count_loop:
+    mov r16, r17      ; Move counter to r16
+    out PORTC, r16    ; Output to PORTC
+    rcall delay       ; Call delay subroutine
+    inc r17           ; Increment counter
+    cpi r17, 100      ; Check if counter reaches 100
+    brne count_loop   ; Repeat if not
+    ldi r17, 0        ; Reset counter
+    rjmp count_loop   ; Restart loop
+;--------------------------------------------------------
+Q6: Alternating Bit Patterns
 
-plt.tight_layout()
-plt.show()
+.include "m32def.inc"
 
-# Plot histograms for grayscale and histogram-equalized images
-plt.figure(figsize=(12, 6))
+ldi r16, 0xFF         ; Set PORTC as output
+out DDRC, r16
+ldi r17, 0x55         ; Initial pattern
+out PORTC, r17
 
-# Original histogram
-plt.subplot(1, 2, 1)
-plt.hist(img_gray.ravel(), bins=256, range=[0, 256], color='blue', alpha=0.7)
-plt.title("Original Grayscale Histogram")
-plt.xlabel("Pixel Intensity")
-plt.ylabel("Frequency")
-plt.grid()
+main:
+    com r17           ; Complement pattern
+    out PORTC, r17    ; Output to PORTC
+    rcall delay       ; Call delay subroutine
+    jmp main          ; Repeat
 
-# Equalized histogram
-plt.subplot(1, 2, 2)
-plt.hist(hist_eq_image.ravel(), bins=256, range=[0, 256], color='green', alpha=0.7)
-plt.title("Histogram Equalized")
-plt.xlabel("Pixel Intensity")
-plt.ylabel("Frequency")
-plt.grid()
+delay:
+    ldi r20, 5
 
-plt.tight_layout()
-plt.show()
+delay_outer:
+    ldi r21, 200
+
+delay_middle:
+    ldi r22, 250
+
+delay_inner:
+    nop
+    nop
+    dec r22
+    brne delay_inner
+    dec r21
+    brne delay_middle
+    dec r20
+    brne delay_outer
+    ret
+;----------------------------------------------------
+Q7: Multi-Level Delay with LED Blink
+
+.include "m32def.inc"
+
+ldi r16, 0xFF         ; Set PORTB as output
+out DDRB, r16
+LDI R16, 0x55         ; Initial value for PORTB
+OUT PORTB, R16
+LDI R23, 10           ; Outer loop counter
+
+LOP_3:
+    LDI R22, 100      ; Middle loop counter
+
+LOP_2:
+    LDI R21, 100      ; Inner loop counter
+
+LOP_1:
+    COM R16           ; Complement value
+    DEC R21           ; Decrement inner counter
+    BRNE LOP_1        ; Repeat if not zero
+    DEC R22           ; Decrement middle counter
+    BRNE LOP_2        ; Repeat if not zero
+    DEC R23           ; Decrement outer counter
+    BRNE LOP_3        ; Repeat if not zero
+;---------------------------------------------------
+
+				; Midterm exam
+.INCLUDE "M32DEF.INC"
+ldi r20,0xff
+out ddrc,r20
+ldi r20,0x00
+out ddrb,r20
+out portc,r20
+ldi r21,0x45
+
+here:
+in r20,pinb
+eor r20,r21
+brne here
+ldi r20,0x99
+out portc,r20
+Exit:JMP EXIT
+------------------------------------------------------
+
+						; HomeWork
+ ; AVR Assembly Program for ATmega32
+; Counts from 0 to 100 and displays on 3 BCD 7-segment displays
+.include "m32def.inc"
+
+LDI R20 , 0xFF 
+OUT DDRC , R20
+
+LDI R16 , 0X00
+LDI R23 , 101
+
+BACK:
 
 
-# Observations
-print("Summary of Image Processing Techniques:")
-print("1. Grayscale conversion simplifies the image to intensity values.")
-print("2. Gaussian blur reduces noise and smooths the image.")
-print("3. Canny edge detection highlights prominent edges.")
-print("4. Resizing changes the image dimensions, useful for standardization.")
-print("5. Rotation transforms the image for orientation analysis.")
-print("6. Contrast stretching enhances the intensity range for better visibility.")
-print("7. Logarithmic transformation emphasizes low-intensity details.")
-print("8. Gamma correction brightens or darkens the image based on the gamma value.")
-print("9. Histogram equalization improves contrast by redistributing intensity values.")
-print("10. The histogram for equalized images shows a uniform distribution, indicating enhanced contrast.")
+  OUT PORTC , R16
+  INC R16
+  CALL DELAY
+  DEC R23
+  BRNE BACK
+  END:
+  JMP END
+
+DELAY:
+  LDI R20,1
+L1: LDI R21,200
+L2: LDI R22,200
+L3 : 
+  DEC R22
+  BRNE L3 
+  DEC R21
+  BRNE L2 
+  DEC R20
+  BRNE L1 
+  RET

@@ -221,3 +221,61 @@ L3 :
   DEC R20
   BRNE L1 
   RET
+------------------------------------------------------------
+Scenario: Button-Controlled LEDs
+Description:
+
+Control three LEDs connected to PORTC.5, PORTC.6, and PORTC.7 using three buttons connected to PINB.0, PINB.1, and PINB.2. Each button toggles its corresponding LED.
+
+.include "m32def.inc"
+
+; Initialization
+ldi r16, 0xE0         ; Set PORTC.5-7 as output
+out DDRC, r16
+ldi r16, 0x00         ; Set PORTB.0-2 as input
+out DDRB, r16
+ldi r16, 0x00         ; Turn off all LEDs initially
+out PORTC, r16
+
+main:
+    in r16, PINB      ; Read buttons
+
+    ; Check and toggle LEDs
+    andi r16, 0x01    ; Button 0
+    breq skip_led5
+    rcall toggle_led5
+
+skip_led5:
+    in r16, PINB
+    andi r16, 0x02    ; Button 1
+    breq skip_led6
+    rcall toggle_led6
+
+skip_led6:
+    in r16, PINB
+    andi r16, 0x04    ; Button 2
+    breq main
+    rcall toggle_led7
+
+    rjmp main
+
+toggle_led5:
+    ldi r17, 0x20     ; Toggle PORTC.5
+    in r18, PORTC
+    eor r18, r17
+    out PORTC, r18
+    ret
+
+toggle_led6:
+    ldi r17, 0x40     ; Toggle PORTC.6
+    in r18, PORTC
+    eor r18, r17
+    out PORTC, r18
+    ret
+
+toggle_led7:
+    ldi r17, 0x80     ; Toggle PORTC.7
+    in r18, PORTC
+    eor r18, r17
+    out PORTC, r18
+    ret

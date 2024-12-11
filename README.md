@@ -1,281 +1,94 @@
-Q1: Button-Controlled LED Toggle
-
-start:
-    cbi ddrb, 1        ; Set PINB.1 as input
-    sbi ddrb, 7        ; Set PINB.7 as output
-    sbi ddrc, 7        ; Set PINC.7 as output
-
-loop:
-    in r16, pinb       ; Read PINB
-    sbrs r16, 1        ; Skip if PINB.1 is set
-    rjmp led_on        ; Jump to led_on if not set
-
-    sbi portc, 7       ; Turn off LED
-    rjmp loop          ; Loop back
-
-led_on:
-    cbi portc, 7       ; Turn on LED
-    rjmp loop          ; Loop back
-;-----------------------------------------------------------------
-Q2: Binary Addition Display
-
-.include "m32def.inc"
-
-start:
-    ldi r16, 0x00      ; Set PORTA and PORTB as input
-    out ddra, r16
-    out ddrb, r16
-    ldi r16, 0xFF      ; Set PORTC as output
-    out ddrc, r16
-
-loop:
-    in r17, pina       ; Read PINA
-    in r18, pinb       ; Read PINB
-    add r17, r18       ; Add values
-    out portc, r17     ; Output result to PORTC
-    rjmp loop          ; Repeat loop
-;---------------------------------------------------------------
-Q3: Multi-Level Nested Loops with Counter
-
-.include "m32def.inc"
-
-ldi r17, 0xFF         ; Set PORTC as output
-out ddrc, r17
-ldi r16, 0x55         ; Initial value for PORTC
-out portc, r16
-
-math:
-    ldi r20, 5        ; Outer loop counter
-
-math1:
-    ldi r21, 200      ; Middle loop counter
-
-math2:
-    ldi r22, 250      ; Inner loop counter
-
-delay:
-    out portc, r16    ; Output to PORTC
-    com r16           ; Complement value in r16
-    dec r22           ; Decrement inner counter
-    brne math2        ; Repeat inner loop if not zero
-    dec r21           ; Decrement middle counter
-    brne math1        ; Repeat middle loop if not zero
-    dec r20           ; Decrement outer counter
-    brne math         ; Repeat outer loop if not zero
-ret
-;---------------------------------------------------------------
-Q4: XOR Logic Check and Output
-
-.include "m32def.inc"
-
-LDI R20, 0xFF         ; Set PORTC as output
-OUT DDRC, R20 
-LDI R20, 0x00         ; Set PORTB as input
-OUT DDRB, R20
-OUT PORTC, R20        ; Clear PORTC
-LDI R21, 5            ; Reference value
-
-HERE: 
-    IN R20, PINB      ; Read PINB
-    EOR R20, R21      ; Compare with reference using XOR
-    BRNE HERE         ; Stay in loop if not equal
-
-    LDI R20, 4        ; Set PORTC to 4
-    OUT PORTC, R20
-
-EXIT:
-    JMP EXIT          ; Infinite loop
-;-----------------------------------------------------------
-Q5: 7-Segment Display Counter
-
-.include "m32def.inc"
-
-ldi r16, 0xFF         ; Set PORTC as output
-out DDRC, r16
-ldi r16, 0x00         ; Clear PORTC
-out PORTC, r16
-
-main:
-    ldi r17, 0        ; Initialize counter
-
-count_loop:
-    mov r16, r17      ; Move counter to r16
-    out PORTC, r16    ; Output to PORTC
-    rcall delay       ; Call delay subroutine
-    inc r17           ; Increment counter
-    cpi r17, 100      ; Check if counter reaches 100
-    brne count_loop   ; Repeat if not
-    ldi r17, 0        ; Reset counter
-    rjmp count_loop   ; Restart loop
-;--------------------------------------------------------
-Q6: Alternating Bit Patterns
-
-.include "m32def.inc"
-
-ldi r16, 0xFF         ; Set PORTC as output
-out DDRC, r16
-ldi r17, 0x55         ; Initial pattern
-out PORTC, r17
-
-main:
-    com r17           ; Complement pattern
-    out PORTC, r17    ; Output to PORTC
-    rcall delay       ; Call delay subroutine
-    jmp main          ; Repeat
-
-delay:
-    ldi r20, 5
-
-delay_outer:
-    ldi r21, 200
-
-delay_middle:
-    ldi r22, 250
-
-delay_inner:
-    nop
-    nop
-    dec r22
-    brne delay_inner
-    dec r21
-    brne delay_middle
-    dec r20
-    brne delay_outer
-    ret
-;----------------------------------------------------
-Q7: Multi-Level Delay with LED Blink
-
-.include "m32def.inc"
-
-ldi r16, 0xFF         ; Set PORTB as output
-out DDRB, r16
-LDI R16, 0x55         ; Initial value for PORTB
-OUT PORTB, R16
-LDI R23, 10           ; Outer loop counter
-
-LOP_3:
-    LDI R22, 100      ; Middle loop counter
-
-LOP_2:
-    LDI R21, 100      ; Inner loop counter
-
-LOP_1:
-    COM R16           ; Complement value
-    DEC R21           ; Decrement inner counter
-    BRNE LOP_1        ; Repeat if not zero
-    DEC R22           ; Decrement middle counter
-    BRNE LOP_2        ; Repeat if not zero
-    DEC R23           ; Decrement outer counter
-    BRNE LOP_3        ; Repeat if not zero
-;---------------------------------------------------
-
-				; Midterm exam
-.INCLUDE "M32DEF.INC"
-ldi r20,0xff
-out ddrc,r20
-ldi r20,0x00
-out ddrb,r20
-out portc,r20
-ldi r21,0x45
-
-here:
-in r20,pinb
-eor r20,r21
-brne here
-ldi r20,0x99
-out portc,r20
-Exit:JMP EXIT
-------------------------------------------------------
-
-						; HomeWork
- ; AVR Assembly Program for ATmega32
-; Counts from 0 to 100 and displays on 3 BCD 7-segment displays
-.include "m32def.inc"
-
-LDI R20 , 0xFF 
-OUT DDRC , R20
-
-LDI R16 , 0X00
-LDI R23 , 101
-
-BACK:
 
 
-  OUT PORTC , R16
-  INC R16
-  CALL DELAY
-  DEC R23
-  BRNE BACK
-  END:
-  JMP END
+graph = {
+    'A': {'B': 10, 'C': 6, 'D': 3},
+    'B': {'E': 5, 'F': 3},
+    'C': {'G': 3, 'H': 4},
+    'D': {'H': 5},
+    'E': {},
+    'F': {},
+    'G': {},
+    'H': {}
+}
 
-DELAY:
-  LDI R20,1
-L1: LDI R21,200
-L2: LDI R22,200
-L3 : 
-  DEC R22
-  BRNE L3 
-  DEC R21
-  BRNE L2 
-  DEC R20
-  BRNE L1 
-  RET
-----------------------------------------------------------
-Scenario: Button-Controlled LEDs
-Description:
+graph2 = {
+    'A': {'B': 20, 'D': 30},
+    'B': {'A': 20, 'C': 25, 'D': 70},
+    'D': {'A': 30, 'B': 70, 'F': 15, 'G': 20, 'E': 35},
+    'C': {'B': 25, 'E': 40},
+    'E': {'D': 35, 'C': 40, 'G': 50, 'H': 70},
+    'F': {'D': 15, 'G': 10},
+    'G': {'F': 10, 'D': 20, 'E': 50, 'H': 60},
+    'H': {'E': 70, 'G': 60}
+}
 
-Control three LEDs connected to PORTC.5, PORTC.6, and PORTC.7 using three buttons connected to PINB.0, PINB.1, and PINB.2. Each button toggles its corresponding LED.
+# Heuristic Definitions
+Heuristic = {'A': 8, 'B': 8, 'C': 2, 'D': 7, 'E': 3, 'F': 6, 'G': 0, 'H': 3}
+Heuristic2 = {'A': 90, 'B': 95, 'C': 88, 'D': 77, 'E': 50, 'F': 55, 'G': 50, 'H': 0}
 
-.include "m32def.inc"
 
-; Initialization
-ldi r16, 0xE0         ; Set PORTC.5-7 as output
-out DDRC, r16
-ldi r16, 0x00         ; Set PORTB.0-2 as input
-out DDRB, r16
-ldi r16, 0x00         ; Turn off all LEDs initially
-out PORTC, r16
+def A_star(graph, start, goal, h):
+    parent = dict()
+    frontier = {start:h[start]}
+    visited = {start:h[start]}
+    while frontier:
+        sorted_queue = sorted(frontier, key=frontier.get) #sorted_queue is a list
+        node = sorted_queue[0]
+        g = frontier.pop(node)-h[node]
+        if node == goal:
+            return parent
+        for n in graph.get(node):
+            if n not in visited:
+                F = h[n] + graph[node][n]+g
+                visited[n] = F
+                frontier[n] = F
+                parent[n] = node
+            else:
+                F = h[n] + graph[node][n]+g
+                if visited[n] >= F:
+                    visited[n] = F
+                    frontier[n] = F
+                    parent[n] = node
+                    
 
-main:
-    in r16, PINB      ; Read buttons
+                    
 
-    ; Check and toggle LEDs
-    andi r16, 0x01    ; Button 0
-    breq skip_led5
-    rcall toggle_led5
+def traceback(parent, start, goal):
+    path = [goal]
+    while path[-1] != start:
+        path.append(parent[path[-1]])
+    path.reverse()
+    return path
 
-skip_led5:
-    in r16, PINB
-    andi r16, 0x02    ; Button 1
-    breq skip_led6
-    rcall toggle_led6
 
-skip_led6:
-    in r16, PINB
-    andi r16, 0x04    ; Button 2
-    breq main
-    rcall toggle_led7
+# Test Case 1
+parent1 = A_star(graph, 'A', 'G', Heuristic)
+path1 = traceback(parent1, 'A', 'G')
+print("Path from A to G:", path1)
 
-    rjmp main
+# Test Case 2
+parent2 = A_star(graph2, 'A', 'H', Heuristic2)
+path2 = traceback(parent2, 'A', 'H')
+print("Path from A to H:", path2)
+-----------------------------------------------------------------------------
 
-toggle_led5:
-    ldi r17, 0x20     ; Toggle PORTC.5
-    in r18, PORTC
-    eor r18, r17
-    out PORTC, r18
-    ret
-
-toggle_led6:
-    ldi r17, 0x40     ; Toggle PORTC.6
-    in r18, PORTC
-    eor r18, r17
-    out PORTC, r18
-    ret
-
-toggle_led7:
-    ldi r17, 0x80     ; Toggle PORTC.7
-    in r18, PORTC
-    eor r18, r17
-    out PORTC, r18
-    ret
+///greedy
+def GBFS(graph, start, goal, h):
+    parent = dict()
+    frontier = {start: h[start]}  # Only consider the heuristic value
+    visited = set([start])  # Track visited nodes
+    
+    while frontier:
+        # Sort the frontier by heuristic value and choose the node with the smallest heuristic
+        sorted_queue = sorted(frontier, key=frontier.get)  # Sort by heuristic value
+        node = sorted_queue[0]
+        frontier.pop(node)  # Remove the node with the smallest heuristic
+        
+        if node == goal:  # Goal found
+            return parent
+        
+        for n in graph.get(node, {}):  # Iterate over neighbors
+            if n not in visited:
+                visited.add(n)
+                frontier[n] = h[n]  # Add the neighbor to the frontier with its heuristic value
+                parent[n] = node  # Update the parent of the neighbor
